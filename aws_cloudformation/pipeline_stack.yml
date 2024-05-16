@@ -1,0 +1,516 @@
+Description: Template que cria recursos necessários para implantação de fluxo de CI/CD para pipelines de treinamento de modelos no sagemaker.
+São criados também outros recursos necessários para a implantação desses modelos, como roles e buckets no S3.
+
+Parameters:
+  SageMakerProjectName:
+    Type: String
+    Description: Name of the project
+    MinLength: 1
+    MaxLength: 28
+    AllowedPattern: ^[a-zA-Z](-*[a-zA-Z0-9])*
+  
+  Stage:
+    Type: String
+    Description: "Application Environment"
+    AllowedValues: ["dev", "stg", "prd"]
+
+Mappings:
+  ResourceNames:
+    AppPrefix:
+      CamelCase: "bainMLEngineeringTest"
+      SnakeCase: "bain_ml_engineering_test"
+      PascalCase: "BainMLEngineeringTest"
+      KebabCase: "bain-ml-engineering-test"
+
+  StageName:
+    dev:
+      CamelCase: "Dev"
+      UpperCase: "DEV"
+    stg:
+      CamelCase: "Stg"
+      UpperCase: "STG"
+    prd:
+      CamelCase: "Prd"
+      UpperCase: "PRD"
+
+Resources:
+
+  MlOpsArtifactsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub bain-ml-test-cicd-bucket-${Stage} # 58 chars max/ 64 allowed
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+
+  CodeBuildRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: 
+                - "sagemaker.amazonaws.com"
+                - "events.amazonaws.com"
+                - "codepipeline.amazonaws.com"
+                - "cloudformation.amazonaws.com"
+                - "codebuild.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      Description: Role used to run code pipeline, code build and sagemaker pipeline
+        - PolicyName: !Sub 
+          - "CodeBuildRole${Stage}"
+          - AppName: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Action:
+              - cloudformation:CreateChangeSet
+              - cloudformation:CreateStack
+              - cloudformation:DescribeChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStacks
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:SetStackPolicy
+              - cloudformation:UpdateStack
+              - cloudformation:ValidateTemplate
+              Resource: arn:aws:cloudformation:*:*:stack/sagemaker-*
+              Effect: Allow
+            - Action:
+              - cloudformation:CreateChangeSet
+              - cloudformation:CreateStack
+              - cloudformation:DescribeChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStacks
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:SetStackPolicy
+              - cloudformation:UpdateStack
+              - cloudformation:ValidateTemplate
+              Resource: arn:aws:cloudformation:*:*:stack/pipeline-*
+              Effect: Allow
+            - Action:
+              - cloudformation:ValidateTemplate
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - cloudwatch:PutMetricData
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              Resource:
+              - arn:aws:codebuild:*:*:project/sagemaker-*
+              - arn:aws:codebuild:*:*:build/sagemaker-*
+              Effect: Allow
+            - Action:
+              - codecommit:CancelUploadArchive
+              - codecommit:GetBranch
+              - codecommit:GetCommit
+              - codecommit:GetUploadArchiveStatus
+              - codecommit:UploadArchive
+              Resource: arn:aws:codecommit:*:*:sagemaker-*
+              Effect: Allow
+            - Action:
+              - codepipeline:StartPipelineExecution
+              Resource: arn:aws:codepipeline:*:*:sagemaker-*
+              Effect: Allow
+            - Action:
+              - ec2:DescribeRouteTables
+              Resource: "*"
+              Effect: Allow
+            - Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:BatchGetImage
+              - ecr:Describe*
+              - ecr:GetAuthorizationToken
+              - ecr:GetDownloadUrlForLayer
+              Resource: "*"
+              Effect: Allow
+            - Effect: Allow
+              Action:
+              - ecr:BatchDeleteImage
+              - ecr:CompleteLayerUpload
+              - ecr:CreateRepository
+              - ecr:DeleteRepository
+              - ecr:InitiateLayerUpload
+              - ecr:PutImage
+              - ecr:UploadLayerPart
+              Resource:
+              - arn:aws:ecr:*:*:repository/sagemaker-*
+            - Action:
+              - events:DeleteRule
+              - events:DescribeRule
+              - events:PutRule
+              - events:PutTargets
+              - events:RemoveTargets
+              Resource:
+              - arn:aws:events:*:*:rule/sagemaker-*
+              Effect: Allow
+            - Action:
+              - iam:PassRole
+              Resource:
+              - arn:aws:iam::*:role/service-role/AmazonSageMakerServiceCatalogProductsUse*
+              - "*"
+              Effect: Allow
+            - Effect: Allow
+              Action:
+              - lambda:InvokeFunction
+              Resource:
+              - arn:aws:lambda:*:*:function:sagemaker-*
+              - !Sub arn:aws:lambda:*:*:function:*blackbelt*${Stage}*
+            - Action:
+              - logs:CreateLogDelivery
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:DeleteLogDelivery
+              - logs:Describe*
+              - logs:GetLogDelivery
+              - logs:GetLogEvents
+              - logs:ListLogDeliveries
+              - logs:PutLogEvents
+              - logs:PutResourcePolicy
+              - logs:UpdateLogDelivery
+              Resource: "*"
+              Effect: Allow
+            - Effect: Allow
+              Action:
+              - s3:CreateBucket
+              - s3:DeleteBucket
+              - s3:GetBucketAcl
+              - s3:GetBucketCors
+              - s3:GetBucketLocation
+              - s3:ListAllMyBuckets
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:PutBucketCors
+              - s3:PutObjectAcl
+              Resource:
+              - arn:aws:s3:::aws-glue-*
+              - arn:aws:s3:::sagemaker-*
+              - !Sub arn:aws:s3:::*blackbelt*${Stage}*
+              - arn:aws:s3:::*
+            - Effect: Allow
+              Action:
+              - s3:AbortMultipartUpload
+              - s3:DeleteObject
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:PutObject
+              Resource:
+              - arn:aws:s3:::aws-glue-*
+              - arn:aws:s3:::sagemaker-*
+              - !Sub arn:aws:s3:::*blackbelt*${Stage}*
+              - arn:aws:s3:::*
+            - Effect: Allow
+              Action:
+              - sagemaker:*
+              NotResource:
+              - arn:aws:sagemaker:*:*:domain/*
+              - arn:aws:sagemaker:*:*:user-profile/*
+              - arn:aws:sagemaker:*:*:app/*
+              - arn:aws:sagemaker:*:*:flow-definition/*
+            - Effect: "Allow"
+              Action:
+              - "ssm:GetParameter"
+              Resource: !Sub
+              - "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AppName}/*"
+              - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
+  ModelBuildCodeCommitEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      # Max length allowed: 64
+      Name: !Sub "sagemaker-${SageMakerProjectName}-build-${Stage}" # max: 10+33+15+5=63 chars
+      Description: "Rule to trigger a deployment when ModelBuild CodeCommit repository is updated"
+      EventPattern:
+        source:
+          - "aws.codecommit"
+        detail-type:
+          - "CodeCommit Repository State Change"
+        resources:
+          - !GetAtt ModelBuildCodeCommitRepository.Arn
+        detail:
+          referenceType:
+            - "branch"
+          referenceName:
+            - !Ref Stage
+      State: "ENABLED"
+      Targets:
+        -
+          Arn:
+            !Join [ ':', [ 'arn', !Ref 'AWS::Partition', 'codepipeline', !Ref 'AWS::Region', !Ref 'AWS::AccountId', !Ref ModelBuildPipeline ] ]
+          RoleArn:
+            !GetAtt CodeBuildRole.Arn
+          Id: !Sub "codecommit-${SageMakerProjectName}-modelbuild-${Stage}"
+      
+  ModelBuildCodeCommitRepository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      # Max allowed length: 100 chars
+      RepositoryName: !Sub "sagemaker-${SageMakerProjectName}-modelbuild" # max: 10+33+15+10=68
+      RepositoryDescription: !Sub "SageMaker Model building workflow infrastructure as code for the Project ${SageMakerProjectName} in the ${Stage} stage"
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
+  SageMakerModelPipelineBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      # Max length: 255 chars
+      Name: !Sub "sagemaker-${SageMakerProjectName}-modelbuild-${Stage}" # max: 10+33+15+10=68
+      Description: Builds the model building workflow code repository, creates the SageMaker Pipeline and executes it
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+         - Name: SAGEMAKER_PROJECT_NAME
+           Value: !Ref SageMakerProjectName
+         - Name: ARTIFACT_BUCKET
+           Value: !Ref MlOpsArtifactsBucket
+         - Name: SAGEMAKER_PIPELINE_NAME
+           Value: !Sub "sagemaker-${SageMakerProjectName}"
+         - Name: SAGEMAKER_PIPELINE_ROLE_ARN
+           Value: !GetAtt CodeBuildRole.Arn
+         - Name: AWS_REGION
+           Value: !Ref AWS::Region
+         - Name: SAGEMAKER_PROJECT_ARN
+           Value: !Join [ ':', [ 'arn', !Ref 'AWS::Partition', 'sagemaker', !Ref 'AWS::Region', !Ref 'AWS::AccountId', !Sub 'project/${SageMakerProjectName}-${Stage}']]
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: codebuild-buildspec.yml
+      TimeoutInMinutes: 480
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
+  CloudFormationRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
+      Policies:
+        - PolicyName: !Sub
+            - "${AppName}CloudFormationPolicy"
+            - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:GetBucketAcl"
+                  - "s3:GetBucketLocation"
+                  - "s3:ListBucket"
+                Resource: !Sub "${MlOpsArtifactsBucket.Arn}/*"
+              - Effect: "Allow"
+                Action:
+                  - "cloudformation:CreateStack"
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:UpdateStack"
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:DescribeChangeSet"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:SetStackPolicy"
+                  - "iam:PassRole"
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                  - "dynamodb:CreateTable"
+                  - "dynamodb:DeleteTable"
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:ListTables"
+                  - "dynamodb:TagResource"
+                  - "dynamodb:UpdateTable"
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                  - "ec2:CreateNetworkInterface"
+                Resource: "*"
+              - Action:
+                  - "events:DeleteRule"
+                  - "events:DescribeRule"
+                  - "events:PutRule"
+                  - "events:PutTargets"
+                  - "events:RemoveTargets"
+                Resource: "*"
+                Effect: Allow
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
+  ModelBuildPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    DependsOn: MlOpsArtifactsBucket
+    Properties:
+      # Max length: 100 chars
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+      Name: !Sub sagemaker-${SageMakerProjectName}-${Stage} # max: 10+33+15+10=68
+      RoleArn: !GetAtt CodeBuildRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location:
+          !Ref MlOpsArtifactsBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: ModelBuildWorkflowCode
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeCommit
+                Version: 1
+              Configuration:
+                # need to explicitly set this to false per https://docs.aws.amazon.com/codepipeline/latest/userguide/update-change-detection.html
+                PollForSourceChanges: false
+                RepositoryName: !GetAtt ModelBuildCodeCommitRepository.Name
+                BranchName: !Ref Stage
+              OutputArtifacts:
+                - Name: ModelBuildSourceArtifact
+
+        - Name: Build
+          Actions:
+            - Name: BuildAndExecuteSageMakerPipeline
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: !Ref SageMakerModelPipelineBuildProject
+                EnvironmentVariables:
+                  !Sub |
+                  [
+                    {"name": "AppConfigSsmParameterName", "value": "${AppConfigParameterStore}"},
+                    {"name": "S3Bucket", "value": "${MlOpsArtifactsBucket}"},
+                    {"name": "Stage", "value": "${Stage}"}
+                  ]
+                BatchEnabled: false
+              InputArtifacts:
+                - Name: ModelBuildSourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+              RunOrder: 1
+
+        - Name: "Deploy"
+          Actions:
+            - Name: "UpdateChangeSet"
+              ActionTypeId:
+                Category: "Deploy"
+                Owner: "AWS"
+                Provider: "CloudFormation"
+                Version: "1"
+              Configuration:
+                ActionMode: "CHANGE_SET_REPLACE"
+                StackName: !Sub 
+                  - "pipeline-${AppName}-${Stage}"
+                  - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "KebabCase" ]
+                Capabilities: "CAPABILITY_AUTO_EXPAND"
+                ChangeSetName: !Sub 
+                  - "pipeline-${AppName}-changeset-${Stage}"
+                  - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "KebabCase" ]
+                RoleArn: !GetAtt "CloudFormationRole.Arn"
+                TemplatePath: "BuildArtifact::aws_cloudformation/master_pipeline.yaml"
+                TemplateConfiguration: "BuildArtifact::aws_cloudformation/configuration.json"
+              InputArtifacts:
+                - Name: "BuildArtifact"
+              RunOrder: 1
+            - Name: "ExecuteChangeSet"
+              ActionTypeId:
+                Category: "Deploy"
+                Owner: "AWS"
+                Provider: "CloudFormation"
+                Version: "1"
+              Configuration:
+                ActionMode: "CHANGE_SET_EXECUTE"
+                StackName: !Sub 
+                  - "pipeline-${AppName}-${Stage}"
+                  - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "KebabCase" ]
+                ChangeSetName: !Sub 
+                  - "pipeline-${AppName}-changeset-${Stage}"
+                  - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "KebabCase" ]
+              InputArtifacts:
+                - Name: "BuildArtifact"
+              RunOrder: 2
+
+  AppConfigParameterStore:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Description: !Sub
+        - "JSON string that defines the ${AppName} configurations in the ${Env} environment"
+        - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+          Env: !Ref Stage
+      Name: !Sub
+        - "/${AppName}/config/JSON/${Env}"
+        - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+          Env: !Ref Stage
+      Type: "String"
+      Value:
+        !Sub |
+        {
+          "PlaceholderRole": "${PlaceholderRole.Arn}"
+        }
+      Tags:
+        "Environment": !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        "Monitoring": "enabled"
+        "BRLinkProject": !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
