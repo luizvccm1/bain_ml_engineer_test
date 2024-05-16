@@ -1,14 +1,5 @@
 version: 0.2
 
-env:
-  variables:
-    LAMBDA_SAM_TEMPLATE: aws_cloudformation/child_templates/cloudformation_functions.yml
-    OUTPUT_CONF_JSON: aws_cloudformation/configuration.json
-    LAMBDA_LAYER_PACKAGE_S3_PREFIX: layers/
-    LAMBDA_LAYER_ENV_VAR_PREFIX: LambdaLayerKey
-    CloudFormationTemplatesS3Prefix: cf_templates
-    LAMBDA_LAYER_REQUIREMENTS_PATH: ./layers
-
 phases:
   install:
     runtime-versions:

@@ -1,0 +1,31 @@
+Description: Template que cria recursos principais utilizados pela arquitetura
+
+Parameters:
+  Stage:
+    Type: "String"
+    Description: "Application Environment"
+    AllowedValues: ["dev", "stg", "prd"]
+  S3Bucket:
+    Type: "String"
+    Description: "S3 Bucket where the deployment artifacts are stored"
+
+Mappings:
+  ResourceNames:
+    AppPrefix:
+      CamelCase: "blackbeltPredictiveMaintenance"
+      SnakeCase: "blackbelt_predictive_maintenance"
+      PascalCase: "BlackbeltPredictiveMaintenance"
+      KebabCase: "blackbelt-predictive-maintenance"
+
+  StageName:
+    dev:
+      CamelCase: "Dev"
+      UpperCase: "DEV"
+    stg:
+      CamelCase: "Stg"
+      UpperCase: "STG"
+    prd:
+      CamelCase: "Prd"
+      UpperCase: "PRD"
+
+

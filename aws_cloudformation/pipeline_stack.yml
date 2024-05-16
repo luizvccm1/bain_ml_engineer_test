@@ -470,7 +470,7 @@ Resources:
                   - "pipeline-${AppName}-changeset-${Stage}"
                   - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "KebabCase" ]
                 RoleArn: !GetAtt "CloudFormationRole.Arn"
-                TemplatePath: "BuildArtifact::aws_cloudformation/master_pipeline.yaml"
+                TemplatePath: "BuildArtifact::aws_cloudformation/master_stack.yaml"
                 TemplateConfiguration: "BuildArtifact::aws_cloudformation/configuration.json"
               InputArtifacts:
                 - Name: "BuildArtifact"
