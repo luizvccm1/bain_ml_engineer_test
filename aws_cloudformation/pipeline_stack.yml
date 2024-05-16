@@ -1,5 +1,4 @@
-Description: Template que cria recursos necessários para implantação de fluxo de CI/CD para pipelines de treinamento de modelos no sagemaker.
-São criados também outros recursos necessários para a implantação desses modelos, como roles e buckets no S3.
+Description: Template que cria recursos necessários para implantação de fluxo de CI/CD para pipelines de treinamento de modelos no sagemaker. São criados também outros recursos necessários para a implantação desses modelos, como roles e buckets no S3.
 
 Parameters:
   SageMakerProjectName:
@@ -68,9 +67,10 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Description: Role used to run code pipeline, code build and sagemaker pipeline
+      Policies:
         - PolicyName: !Sub 
-          - "CodeBuildRole${Stage}"
-          - AppName: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
+            - "CodeBuildRole${AppName}"
+            - AppName: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -470,7 +470,7 @@ Resources:
                   - "pipeline-${AppName}-changeset-${Stage}"
                   - AppName: !FindInMap [ "ResourceNames", "AppPrefix", "KebabCase" ]
                 RoleArn: !GetAtt "CloudFormationRole.Arn"
-                TemplatePath: "BuildArtifact::aws_cloudformation/master_stack.yaml"
+                TemplatePath: "BuildArtifact::aws_cloudformation/master_stack.yml"
                 TemplateConfiguration: "BuildArtifact::aws_cloudformation/configuration.json"
               InputArtifacts:
                 - Name: "BuildArtifact"
@@ -508,7 +508,7 @@ Resources:
       Value:
         !Sub |
         {
-          "PlaceholderRole": "${PlaceholderRole.Arn}"
+          "PlaceholderRole": "PlaceholderRole.Arn"
         }
       Tags:
         "Environment": !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
