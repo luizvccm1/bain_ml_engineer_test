@@ -1,0 +1,7 @@
+{
+    "Parameters": {
+      "S3Bucket": null,
+      "Stage": null,
+      "CloudFormationTemplatesS3Prefix": null
+    }
+}

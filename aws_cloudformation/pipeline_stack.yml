@@ -335,6 +335,7 @@ Resources:
         - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
         - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
         - "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
+        - "arn:aws:iam::aws:policy/AwsCloudFormationFullAccess"
       Policies:
         - PolicyName: !Sub
             - "${AppName}CloudFormationPolicy"
