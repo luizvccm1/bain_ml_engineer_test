@@ -89,7 +89,7 @@ def get_pipeline(
     #Defining pipeline processors
 
     training_processor_sklearn= SKLearn(
-        entry_point= os.path.join(BASE_DIR, "model_training_script.py"),
+        entry_point= "model_training_script.py",
         framework_version= "1.2-1",
         instance_count= 1, 
         instance_type= training_instance_type_sklearn,
@@ -102,7 +102,8 @@ def get_pipeline(
                           "n_estimators":300,
                           "max_depth":5,
                           "loss":"absolute_error"},
-        dependencies=[os.path.join(BASE_DIR,'requirements.txt')]
+        source_dir = BASE_DIR,
+        dependencies=['requirements.txt']
     )
 
     script_processor_model_eval = ScriptProcessor(command=['python3'],
