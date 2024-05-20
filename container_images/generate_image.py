@@ -11,10 +11,11 @@ ecr= boto3.client('ecr')
 build_image=False
 #Checar se existe imagem no repositório
 print("Checando existência de imagem prévia no ECR")
+repository_name= f"sagemaker-{str(sys.argv[1])}-{os.environ['Stage']}"
 try:
-    repositories= ecr.describe_repositories(repositoryNames=[f"{str(sys.argv[1])}-{os.environ['Stage']}"])  
+    repositories= ecr.describe_repositories(repositoryNames=[repository_name])  
     if len(repositories['repositories'] > 1):
-        rep_name= f"{str(sys.argv[1])}-{os.environ['Stage']}"
+        rep_name= repository_name
     else:
         rep_name= repositories['repositories'][0]['repositoryName']
 
@@ -27,8 +28,8 @@ try:
         build_image=True
 
 except botocore.exceptions.ClientError as e:
-    if e.response['Error']['Code'] == 'RepositoryNotoundException':
-        print(f" Repositório {str(sys.argv[1])}-{os.environ['Stage']}. Realizando o Build do mesmo")
+    if e.response['Error']['Code'] == 'RepositoryNotFoundException':
+        print(f" Repositório {repository_name} não encontrado. Realizando o Build do mesmo")
         build_image=True
     else:
         print(f"Erro inexperado encontrado: {e}")
