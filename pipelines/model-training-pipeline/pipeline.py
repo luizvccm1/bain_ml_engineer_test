@@ -123,8 +123,7 @@ def get_pipeline(
                 s3_data=training_data_s3_path,
                 content_type="text/csv",
             )
-        },
-        requirements= [os.path.join(BASE_DIR,"requirements.txt")]
+        }
     )
 
     evaluation_report = PropertyFile(
