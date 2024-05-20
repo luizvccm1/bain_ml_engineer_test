@@ -14,11 +14,32 @@ phases:
     runtime-versions:
       python: 3.8
     commands:
-      - pip3 install --upgrade --force-reinstall . "awscli"
-      - pip3 install --upgrade --force-reinstall "protobuf==3.20.0" . "sagemaker" "aws-sam-cli==1.46.0" "aws-lambda-builders==1.14.0" "aws-sam-translator==1.45.0"
+      - pip3 install --upgrade --force-reinstall .
+      - pip3 install --upgrade --force-reinstall "awscli" "protobuf==3.20.0""aws-sam-cli==1.46.0" "aws-lambda-builders==1.14.0" "aws-sam-translator==1.45.0"
 
   build:
     commands:
+      - export PYTHONUNBUFFERED=TRUE
+      - chmod +x container_images/build_image.sh
+
+      - folders=`ls -d container_images/*/`
+      - for value in $folders;
+        do
+          image_folder=${value:17:(-1)};
+          echo ${image_folder};
+          python container_images/generate_image.py $image_folder;
+        done
+      - echo "Create/Update of the SageMaker container images complete."
+
+      - folders=`ls -d pipelines/*/`
+      - for value in $folders;
+        do
+          pipeline_folder=${value:10:(-1)};
+          echo ${pipeline_folder};
+          run-pipeline --module-name pipelines.${pipeline_folder}.pipeline --role-arn $SAGEMAKER_PIPELINE_ROLE_ARN --kwargs "{\"region\":\"${AWS_REGION}\",\"sagemaker_project_arn\":\"${SAGEMAKER_PROJECT_ARN}\",\"role\":\"${SAGEMAKER_PIPELINE_ROLE_ARN}\",\"default_bucket\":\"${S3Bucket}\", \"image_name\":\"sagemaker-${pipeline_folder}-${Stage}\", \"stage\":\"${Stage}\"}";
+        done
+      - echo "Create/Update of the SageMaker Pipeline and execution completed."
+      
       - bash codebuild/build.sh
 
 artifacts:
