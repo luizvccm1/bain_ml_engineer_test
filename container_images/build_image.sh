@@ -9,7 +9,7 @@ region="$4"
 tag="$5"
 stage="$6"
 
-echo "Declared veriables"
+echo "Declared variables"
 
 echo $ecr_repository
 echo $processing_repository_uri
