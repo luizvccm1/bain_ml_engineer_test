@@ -59,7 +59,7 @@ if build_image == False:
         local_key="/".join(key_split[0:1] + key_split[2:])
         s3.download_file(os.environ['S3Bucket'], object['Key'], "temp.txt")
         if os.path.exists(local_key):
-            print("Comparando arquivo local {local_key} com sua versão do S3")
+            print(f"Comparando arquivo local {local_key} com sua versão do S3")
             if not filecmp.cmp("temp.txt", local_key, shallow=False):
                 build_image=True
                 break
