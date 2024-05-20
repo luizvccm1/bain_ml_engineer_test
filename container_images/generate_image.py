@@ -14,7 +14,7 @@ print("Checando existência de imagem prévia no ECR")
 repository_name= f"sagemaker-{str(sys.argv[1])}-{os.environ['Stage']}"
 try:
     repositories= ecr.describe_repositories(repositoryNames=[repository_name])  
-    if len(repositories['repositories'] > 1):
+    if len(repositories['repositories']) > 1:
         rep_name= repository_name
     else:
         rep_name= repositories['repositories'][0]['repositoryName']
