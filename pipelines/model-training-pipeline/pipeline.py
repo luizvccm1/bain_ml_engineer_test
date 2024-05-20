@@ -43,10 +43,9 @@ def get_pipeline(
    region="us-east-1",
    role=None,
    default_bucket=None,
-   pipeline_name="PipelineDefaultName",  # You can find your pipeline name in the Studio UI (project -> Pipelines -> name)
+   pipeline_name="property-evaluator-training",  # You can find your pipeline name in the Studio UI (project -> Pipelines -> name)
    image_name='',
-   stage='test',
-   validation_lambda_arn=""
+   stage='test'
 ):
 
     sagemaker_session = sagemaker.session.Session()

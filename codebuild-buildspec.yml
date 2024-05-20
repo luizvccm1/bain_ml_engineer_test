@@ -36,7 +36,7 @@ phases:
         do
           pipeline_folder=${value:10:(-1)};
           echo ${pipeline_folder};
-          run-pipeline --module-name pipelines.${pipeline_folder}.pipeline --role-arn $SAGEMAKER_PIPELINE_ROLE_ARN --kwargs "{\"region\":\"${AWS_REGION}\",\"sagemaker_project_arn\":\"${SAGEMAKER_PROJECT_ARN}\",\"role\":\"${SAGEMAKER_PIPELINE_ROLE_ARN}\",\"default_bucket\":\"${S3Bucket}\", \"image_name\":\"sagemaker-${pipeline_folder}-${Stage}\", \"stage\":\"${Stage}\"}";
+          run-pipeline --module-name pipelines.${pipeline_folder}.pipeline --role-arn $SAGEMAKER_PIPELINE_ROLE_ARN --kwargs "{\"region\":\"${AWS_REGION}\",\"role\":\"${SAGEMAKER_PIPELINE_ROLE_ARN}\",\"default_bucket\":\"${S3Bucket}\", \"image_name\":\"sagemaker-${pipeline_folder}-${Stage}\", \"stage\":\"${Stage}\"}";
         done
       - echo "Create/Update of the SageMaker Pipeline and execution completed."
 
