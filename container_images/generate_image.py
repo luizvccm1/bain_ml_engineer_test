@@ -3,29 +3,71 @@ import subprocess
 import sys
 import filecmp
 import os
+import botocore
+
+s3 = boto3.client('s3')
+ecr= boto3.client('ecr')
 
 build_image=False
+#Checar se existe imagem no repositório
+print("Checando existência de imagem prévia no ECR")
+try:
+    repositories= ecr.describe_repositories(repositoryNames=[f"{str(sys.argv[1])}-{os.environ['Stage']}"])  
+    if len(repositories['repositories'] > 1):
+        rep_name= f"{str(sys.argv[1])}-{os.environ['Stage']}"
+    else:
+        rep_name= repositories['repositories'][0]['repositoryName']
 
-#Adicionar: Checar se a imagem já foi construída antes
+    response= ecr.list_images(
+        repositoryName=rep_name
+    )
+
+    if len(response['imageIds']) == 0:
+        print("Não encontradas imagens no repositório. Realizando o Build")
+        build_image=True
+
+except botocore.exceptions.ClientError as e:
+    if e.response['Error']['Code'] == 'RepositoryNotoundException':
+        print(f" Repositório {str(sys.argv[1])}-{os.environ['Stage']}. Realizando o Build do mesmo")
+        build_image=True
+    else:
+        print(f"Erro inexperado encontrado: {e}")
+        print("Realizando o Build")
+        build_image=True
+
+else:
+    print(f"Erro inexperado encontrado: {e}")
+    print("Realizando o Build")
+    build_image=True
+
 
 #Checar se houveram alterações nos arquivos de imagem
-s3 = boto3.client('s3')
-object_list= s3.list_objects_v2(Bucket=os.environ['S3Bucket'], Prefix='container_images/{Stage}/{folder_name}/'.format(folder_name=str(sys.argv[1]), Stage=os.environ['Stage']))
+try:
+    object_list= s3.list_objects_v2(Bucket=os.environ['S3Bucket'], Prefix='container_images/{Stage}/{folder_name}/'.format(folder_name=str(sys.argv[1]), Stage=os.environ['Stage']))
+except Exception as e:
+    print("Erro na leitura do S3: {e}")
+    print("Realizando o Build")
+    object_list={}
 
-if 'Contents' in object_list:
+if not object_list:
+    build_image =True
+
+if build_image == False:
     for object in object_list['Contents']:
         key_split= object['Key'].split('/')
         local_key="/".join(key_split[0:1] + key_split[2:])
         s3.download_file(os.environ['S3Bucket'], object['Key'], "temp.txt")
         if os.path.exists(local_key):
+            print("Comparando arquivo local {local_key} com sua versão do S3")
             if not filecmp.cmp("temp.txt", local_key, shallow=False):
                 build_image=True
                 break
         else:
             s3.delete_object(Bucket=os.environ['S3Bucket'], Key=object['Key'])
+            build_image=True
             print("Arquivo deletado")
-else:
-    build_image=True
+    
+    #To do: Implementar lógica que checa aruivos adicionais localmente
 
 if build_image:
     print("Build da imagem")
