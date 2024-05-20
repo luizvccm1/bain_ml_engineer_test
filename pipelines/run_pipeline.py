@@ -22,8 +22,6 @@ from pipelines._utils import get_pipeline_driver, convert_struct
 
 
 def main():  # pragma: no cover
-    print("To aqui")
-
     """The main harness that creates or updates and runs the pipeline.
 
     Creates or updates the pipeline and runs it.

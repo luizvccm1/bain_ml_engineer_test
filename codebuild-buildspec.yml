@@ -35,6 +35,7 @@ phases:
       - for value in $folders;
         do
           pipeline_folder=${value:10:(-1)};
+          chmod 777 pipelines/${pipeline_folder}
           echo ${pipeline_folder};
           run-pipeline --module-name pipelines.${pipeline_folder}.pipeline --role-arn $SAGEMAKER_PIPELINE_ROLE_ARN --kwargs "{\"region\":\"${AWS_REGION}\",\"role\":\"${SAGEMAKER_PIPELINE_ROLE_ARN}\",\"default_bucket\":\"${S3Bucket}\", \"image_name\":\"sagemaker-${pipeline_folder}-${Stage}\", \"stage\":\"${Stage}\"}";
         done
