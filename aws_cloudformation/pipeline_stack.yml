@@ -131,25 +131,9 @@ Resources:
               - ec2:DescribeRouteTables
               Resource: "*"
               Effect: Allow
-            - Action:
-              - ecr:BatchCheckLayerAvailability
-              - ecr:BatchGetImage
-              - ecr:Describe*
-              - ecr:GetAuthorizationToken
-              - ecr:GetDownloadUrlForLayer
+            - Action: "ecr:*"
+              Effect: "Allow"
               Resource: "*"
-              Effect: Allow
-            - Effect: Allow
-              Action:
-              - ecr:BatchDeleteImage
-              - ecr:CompleteLayerUpload
-              - ecr:CreateRepository
-              - ecr:DeleteRepository
-              - ecr:InitiateLayerUpload
-              - ecr:PutImage
-              - ecr:UploadLayerPart
-              Resource:
-              - arn:aws:ecr:*:*:repository/sagemaker-*
             - Action:
               - events:DeleteRule
               - events:DescribeRule
