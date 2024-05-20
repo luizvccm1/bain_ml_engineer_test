@@ -36,7 +36,7 @@ except botocore.exceptions.ClientError as e:
         print("Realizando o Build")
         build_image=True
 
-else:
+except Exception as e:
     print(f"Erro inexperado encontrado: {e}")
     print("Realizando o Build")
     build_image=True
