@@ -44,5 +44,5 @@ phases:
 
 artifacts:
   files:
-    - aws_cloudformation/master_stack.yaml
+    - aws_cloudformation/master_stack.yml
     - $OUTPUT_CONF_JSON

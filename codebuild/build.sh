@@ -1,6 +1,13 @@
 #!/bin/bash
 set -eu
 
+echo "##### CREATE DEFINED LAMBDA LAYERS"
+. codebuild/create_lambda_layers.sh
+
+echo "##### PACKAGING LAMBDA SAM TEMPLATE"
+sam --version
+sam package --s3-bucket "$S3Bucket" -t "$LAMBDA_SAM_TEMPLATE" --output-template-file "$LAMBDA_SAM_TEMPLATE" --s3-prefix "deploy_packages"
+
 echo "##### LOAD CLOUDFORMATION CONFIGURATIONS JSON DYNAMIC VALUES FROM LOCAL ENVIRONMENT VARIABLES"
 python codebuild/update_cloudformation_config_json.py
 
