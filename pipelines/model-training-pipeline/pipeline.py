@@ -107,8 +107,7 @@ def get_pipeline(
                           "n_estimators":300,
                           "max_depth":5,
                           "loss":"absolute_error"},
-        source_dir = BASE_DIR,
-        dependencies=['requirements.txt']
+        source_dir = BASE_DIR
     )
 
     script_processor_model_eval = ScriptProcessor(command=['python3'],
