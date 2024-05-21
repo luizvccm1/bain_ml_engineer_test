@@ -86,11 +86,6 @@ def get_pipeline(
 
     timestamp=Join(on="", values=[training_timestamp, ])
 
-
-    for root, dirs, files in os.walk(BASE_DIR):
-        for file in files:
-            print(os.path.join(root, file))
-
     #Defining pipeline processors
 
     training_processor_sklearn= SKLearn(
