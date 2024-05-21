@@ -49,7 +49,7 @@ Resources:
     Type: "AWS::Serverless::Function"
     Properties:    
       CodeUri: "../../pipelines/model-training-pipeline"
-      Description: "Função responsável por logar resultado de pipeline de treinamento de modelo e atuzalizar endpoint do modelo"
+      Description: "Função responsável por logar resultado de pipeline de treinamento de modelo e atualizar endpoint do modelo"
       Environment:
         Variables:
           PIPELINE_EXECUTION_LOGGING_TABLE: !Ref BestModelDynamoTable
