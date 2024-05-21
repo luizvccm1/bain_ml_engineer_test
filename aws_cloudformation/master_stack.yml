@@ -37,7 +37,7 @@ Mappings:
       CamelCase: "Prd"
       UpperCase: "PRD"
 
-  Resources:
+Resources:
 
     ModelCreationStack:
     Type: "AWS::CloudFormation::Stack"
