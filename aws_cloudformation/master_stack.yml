@@ -8,6 +8,10 @@ Parameters:
   S3Bucket:
     Type: "String"
     Description: "S3 Bucket where the deployment artifacts are stored"
+  ResultsUpdaterLambdaRole:
+    Type: "String"
+    Description: "Role to be passed to the lambda function responsible for updating the logs after the training pipeline runs"
+    AllowedValues: ["dev", "stg", "prd"]
     
 Mappings:
   ResourceNames:
@@ -36,6 +40,7 @@ Mappings:
       TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/model_creation_stack.yml"
       Parameters:
         Stage: !Ref "Stage"
+        ResultsUpdaterLambdaRole: !Ref "ResultsUpdaterLambdaRole"
       Tags: 
         - Key: "Environment"
           Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]

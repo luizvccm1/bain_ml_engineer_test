@@ -221,6 +221,30 @@ Resources:
         - Key: "Project"
           Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
 
+  PipelineLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: 
+                - "lambda.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      Description: Role used by the lambda responsible for updating the DynamoDB logs with the results of the lambda training
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
   ModelBuildCodeCommitEventRule:
     Type: AWS::Events::Rule
     Properties:
@@ -493,7 +517,7 @@ Resources:
       Value:
         !Sub |
         {
-          "PlaceholderRole": "PlaceholderRole.Arn"
+          "PipelineLambdaRole": "${PipelineLambdaRole.Arn}"
         }
       Tags:
         "Environment": !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]

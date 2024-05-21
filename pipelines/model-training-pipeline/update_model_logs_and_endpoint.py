@@ -83,7 +83,7 @@ def lambda_handler(event, context):
         sagemaker = boto3.client('sagemaker')
 
         #Checks if endpoint to be updated exists.
-        endpoint_name = os.environ["SERVERLESS_ENDPOINT_NAME"]
+        endpoint_name = f'{os.environ["SERVERLESS_ENDPOINT_NAME"]}-{os.environ["STAGE"]}'
 
         existence_flag=False
         try:

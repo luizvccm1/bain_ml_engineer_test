@@ -1,9 +1,14 @@
-Description: Template que cria recursos principais utilizados pela arquitetura
+Description: Template that creates the AWS resources related to the model training pipeline
 
 Parameters:
   Stage:
     Type: "String"
     Description: "Application Environment"
+    AllowedValues: ["dev", "stg", "prd"]
+
+  ResultsUpdaterLambdaRole:
+    Type: "String"
+    Description: "Role to be passed to the lambda function responsible for updating the logs after the training pipeline runs"
     AllowedValues: ["dev", "stg", "prd"]
     
 Mappings:
@@ -27,15 +32,32 @@ Mappings:
 
 Resources:
   BestModelDynamoTable:
-  Type: AWS::DynamoDB::Table
-  Properties:
-    AttributeDefinitions:
-      -
-        AttributeName: "TrainingJobName"
-        AttributeType: "S"
-    BillingMode: "PAY_PER_REQUEST"
-    KeySchema:
-      -
-        AttributeName: "TrainingJobName"
-        KeyType: "HASH"
-    TableName: !Sub "training-pipeline-results-${Stage}"
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "TrainingJobName"
+          AttributeType: "S"
+      BillingMode: "PAY_PER_REQUEST"
+      KeySchema:
+        -
+          AttributeName: "TrainingJobName"
+          KeyType: "HASH"
+      TableName: !Sub "training-pipeline-results-${Stage}"
+
+  LogTrainingResults:
+    Type: "AWS::Serverless::Function"
+    Properties:    
+      CodeUri: "../../pipelines/model-training-pipeline"
+      Description: "Função responsável por logar resultado de pipeline de treinamento de modelo e atuzalizar endpoint do modelo"
+      Environment:
+        Variables:
+          PIPELINE_EXECUTION_LOGGING_TABLE: !Ref BestModelDynamoTable
+          STAGE: !Ref "Stage"
+          SERVERLESS_ENDPOINT_NAME: "property-value-regressor-serverless-endpoint"
+      FunctionName: !Sub "update-model-logs-and-endpoints-${Stage}"
+      Handler: !Sub "update_model_logs_and_endpoint.lambda_handler"
+      Runtime: "python3.8"
+      MemorySize: 512
+      Role: !Ref "ResultsUpdaterLambdaRole"
+      Timeout: 900
