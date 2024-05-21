@@ -1,5 +1,7 @@
 Description: Template that creates the AWS resources related to the model training pipeline
 
+Transform: AWS::Serverless-2016-10-31
+
 Parameters:
   Stage:
     Type: "String"
