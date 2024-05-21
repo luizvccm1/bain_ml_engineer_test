@@ -195,6 +195,7 @@ def get_pipeline(
             "training_job_name": step_sklearn.properties.TrainingJobName,
             "training_data_s3_path": training_data_s3_path,
             "validation_data_s3_path": validation_data_s3_path,
+            "model_artifacts_s3_path": step_sklearn.properties.ModelArtifacts.S3ModelArtifacts,
             "model_name": step_model_registration.properties.ModelName,
             "model_metrics_s3_path": step_model_eval.properties.ProcessingOutputConfig.Outputs["model_metrics"].S3Output.S3Uri,
             "model_accepted": True
@@ -210,6 +211,7 @@ def get_pipeline(
             "training_job_name": step_sklearn.properties.TrainingJobName,
             "training_data_s3_path": training_data_s3_path,
             "validation_data_s3_path": validation_data_s3_path,
+            "model_artifacts_s3_path": step_sklearn.properties.ModelArtifacts.S3ModelArtifacts,
             "model_name": None,
             "model_metrics_s3_path": step_model_eval.properties.ProcessingOutputConfig.Outputs["model_metrics"].S3Output.S3Uri,
             "model_accepted": False

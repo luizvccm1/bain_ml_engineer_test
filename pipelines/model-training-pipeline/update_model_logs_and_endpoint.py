@@ -39,11 +39,15 @@ def lambda_handler(event, context):
     #Construct DynamoDB dict from event
     dynamo_dict= {}
 
-    dynamo_dict['timestamp']               = event['timestamp']
-    dynamo_dict['model_name']              = event['model_name']
-    dynamo_dict['training_job_name']       = event['training_job_name']
-    dynamo_dict['training_data_s3_path']   = event['training_data_s3_path']
-    dynamo_dict['validation_data_s3_path'] = event['validation_data_s3_path']
+    datetime_timestamp= datetime.fromtimestamp(event['timestamp'])
+    str_datetime_timestamp= datetime_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+    dynamo_dict['Timestamp']            = str_datetime_timestamp
+    dynamo_dict['Modelname']            = event['model_name']
+    dynamo_dict['TrainingJobName']      = event['training_job_name']
+    dynamo_dict['TrainingDataS3Path']   = event['training_data_s3_path']
+    dynamo_dict['ValidationDataS3Path'] = event['validation_data_s3_path']
+    dynamo_dict['ModelArtifactsS3Path'] = event['model_artifacts_s3_path']
 
     try:
         metrics_json= read_json_from_s3(event['model_metrics_s3_path'])
@@ -52,10 +56,10 @@ def lambda_handler(event, context):
         print("Metric values will be left indetermined")
         metrics_json={'metrics': {}}
 
-    dynamo_dict['rmse']             = metrics_json['metrics'].get('rmse', 'Indetermined')
-    dynamo_dict['mape']             = metrics_json['metrics'].get('mape', 'Indetermined')
-    dynamo_dict['mae']              = metrics_json['metrics'].get('mae', 'Indetermined')
-    dynamo_dict['model_accepted']   = event['model_accepted']
+    dynamo_dict['RMSE']          = metrics_json['metrics'].get('rmse', 'Indetermined')
+    dynamo_dict['MAPE']          = metrics_json['metrics'].get('mape', 'Indetermined')
+    dynamo_dict['MAE']           = metrics_json['metrics'].get('mae', 'Indetermined')
+    dynamo_dict['ModelAccepted'] = event['model_accepted']
 
     if type(dynamo_dict['rmse']) == float:
         dynamo_dict['rmse']= Decimal(dynamo_dict['rmse'])
@@ -96,6 +100,7 @@ def lambda_handler(event, context):
                 # Handle other exceptions if necessary
                 print("An error occurred:", e)
 
+        #Creates endpoint config using new model
         response = sagemaker.create_endpoint_config(
                 EndpointConfigName=f"serverless-endpoint-default-config-{os.environ["STAGE"]}-{event['timestamp']}",
                 ProductionVariants=[
@@ -111,6 +116,7 @@ def lambda_handler(event, context):
                 ]
             )
 
+        #Updates model or creates new one
         if existence_flag:
             response = sagemaker.update_endpoint(
                 EndpointName=os.environ["SERVERLESS_ENDPOINT_NAME"],

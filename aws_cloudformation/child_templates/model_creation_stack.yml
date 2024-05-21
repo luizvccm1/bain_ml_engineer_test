@@ -1,0 +1,41 @@
+Description: Template que cria recursos principais utilizados pela arquitetura
+
+Parameters:
+  Stage:
+    Type: "String"
+    Description: "Application Environment"
+    AllowedValues: ["dev", "stg", "prd"]
+    
+Mappings:
+  ResourceNames:
+    AppPrefix:
+      CamelCase: "blackbeltPredictiveMaintenance"
+      SnakeCase: "blackbelt_predictive_maintenance"
+      PascalCase: "BlackbeltPredictiveMaintenance"
+      KebabCase: "blackbelt-predictive-maintenance"
+
+  StageName:
+    dev:
+      CamelCase: "Dev"
+      UpperCase: "DEV"
+    stg:
+      CamelCase: "Stg"
+      UpperCase: "STG"
+    prd:
+      CamelCase: "Prd"
+      UpperCase: "PRD"
+
+  Resources:
+    BestModelDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "TrainingJobName"
+          AttributeType: "S"
+      BillingMode: "PAY_PER_REQUEST"
+      KeySchema:
+        -
+          AttributeName: "TrainingJobName"
+          KeyType: "HASH"
+      TableName: !Sub "training-pipeline-results-${Stage}"
