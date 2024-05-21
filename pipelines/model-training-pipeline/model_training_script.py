@@ -1,3 +1,11 @@
+import os
+os.system(f'pip install --force-reinstall pandas==1.5.2')
+os.system(f'pip install --force-reinstall scikit-learn==1.3.1')
+os.system(f'pip install category_encoders==2.6.3')
+os.system(f'pip install polars')
+os.system(f'pip install pyarrow')
+os.system(f'pip install joblib')
+
 import polars as pl
 
 from category_encoders import TargetEncoder
@@ -5,7 +13,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import GradientBoostingRegressor
 
-import os
 import argparse
 import joblib
 
