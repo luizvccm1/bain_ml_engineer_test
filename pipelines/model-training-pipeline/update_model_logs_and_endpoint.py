@@ -102,19 +102,19 @@ def lambda_handler(event, context):
 
         #Creates endpoint config using new model
         response = sagemaker.create_endpoint_config(
-                EndpointConfigName=f"serverless-endpoint-default-config-{os.environ["STAGE"]}-{event['timestamp']}",
-                ProductionVariants=[
-                    {
-                        "ModelName": event['model_name'],
-                        "VariantName": "AllTraffic",
-                        "ServerlessConfig": {
-                            "MemorySizeInMB": 1024,
-                            "MaxConcurrency": 10,
-                            "ProvisionedConcurrency": 1,
-                        }
-                    } 
-                ]
-            )
+            EndpointConfigName=f'serverless-endpoint-default-config-{os.environ["STAGE"]}-{event["timestamp"]}',
+            ProductionVariants=[
+                {
+                    "ModelName": event['model_name'],
+                    "VariantName": "AllTraffic",
+                    "ServerlessConfig": {
+                        "MemorySizeInMB": 1024,
+                        "MaxConcurrency": 10,
+                        "ProvisionedConcurrency": 1,
+                    }
+                } 
+            ]
+        )
 
         #Updates model or creates new one
         if existence_flag:
