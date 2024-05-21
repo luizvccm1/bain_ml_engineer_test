@@ -243,7 +243,8 @@ def get_pipeline(
             processing_instance_type_model_eval,
             training_data_s3_path,
             validation_data_s3_path,
-            training_timestamp
+            training_timestamp,
+            validation_lambda_arn
         ],
         steps=[step_sklearn,
                step_model_eval, 
