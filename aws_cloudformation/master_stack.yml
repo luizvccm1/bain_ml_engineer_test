@@ -40,18 +40,18 @@ Mappings:
 Resources:
 
     ModelCreationStack:
-    Type: "AWS::CloudFormation::Stack"
-    Properties:
-      TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/model_creation_stack.yml"
-      Parameters:
-        Stage: !Ref "Stage"
-        PipelineLambdaRole: !Ref "PipelineLambdaRole"
-      Tags: 
-        - Key: "Environment"
-          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
-        - Key: "Monitoring"
-          Value: "enabled"
-        - Key: "Project"
-          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+      Type: "AWS::CloudFormation::Stack"
+      Properties:
+        TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/model_creation_stack.yml"
+        Parameters:
+          Stage: !Ref "Stage"
+          PipelineLambdaRole: !Ref "PipelineLambdaRole"
+        Tags: 
+          - Key: "Environment"
+            Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+          - Key: "Monitoring"
+            Value: "enabled"
+          - Key: "Project"
+            Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
 
 
