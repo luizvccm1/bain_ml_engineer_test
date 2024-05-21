@@ -67,6 +67,8 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Description: Role used to run code pipeline, code build and sagemaker pipeline
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
       Policies:
         - PolicyName: !Sub 
             - "CodeBuildRole${AppName}"
@@ -154,7 +156,7 @@ Resources:
               - lambda:InvokeFunction
               Resource:
               - arn:aws:lambda:*:*:function:sagemaker-*
-              - !Sub arn:aws:lambda:*:*:function:*blackbelt*${Stage}*
+              - !Sub arn:aws:lambda:*:*:function:*${Stage}*
             - Action:
               - logs:CreateLogDelivery
               - logs:CreateLogGroup
