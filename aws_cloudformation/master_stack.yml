@@ -8,10 +8,12 @@ Parameters:
   S3Bucket:
     Type: "String"
     Description: "S3 Bucket where the deployment artifacts are stored"
-  ResultsUpdaterLambdaRole:
+  PipelineLambdaRole:
     Type: "String"
     Description: "Role to be passed to the lambda function responsible for updating the logs after the training pipeline runs"
-    AllowedValues: ["dev", "stg", "prd"]
+  CloudFormationTemplatesS3Prefix:
+    Type: "String"
+    Description: "S3 Prefix of the path containing the substack files"
     
 Mappings:
   ResourceNames:
@@ -40,7 +42,7 @@ Mappings:
       TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/model_creation_stack.yml"
       Parameters:
         Stage: !Ref "Stage"
-        ResultsUpdaterLambdaRole: !Ref "ResultsUpdaterLambdaRole"
+        PipelineLambdaRole: !Ref "PipelineLambdaRole"
       Tags: 
         - Key: "Environment"
           Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
