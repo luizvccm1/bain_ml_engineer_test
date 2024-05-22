@@ -39,5 +39,3 @@ WORKDIR /opt/program
 
 # Define the entry point
 ENTRYPOINT ["python3", "serve"]
-
-
