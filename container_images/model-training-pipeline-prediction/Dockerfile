@@ -31,6 +31,7 @@ COPY serve-files /opt/program
 
 # Ensure var/log/nginx directory exists and their symbolic links can be created
 RUN mkdir -p /var/log/nginx
+RUN chmod -R 755 /var/log/nginx && \
 RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
     ln -sf /dev/stderr /var/log/nginx/error.log
 
