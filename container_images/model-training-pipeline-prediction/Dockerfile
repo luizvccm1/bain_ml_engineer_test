@@ -28,6 +28,9 @@ ENV PATH="/opt/program:${PATH}"
 # Copy serve files to enviroment
 COPY serve-files /opt/ml
 
+# Ensure var/log/nginx directory exists
+RUN mkdir -p /var/log/nginx
+
 # Set the working directory
 WORKDIR /opt/ml
 
