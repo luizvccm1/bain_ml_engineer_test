@@ -20,7 +20,7 @@ def read_json_from_s3(s3_path: str) -> dict:
     split_path= s3_path.split("/")
 
     bucket_name = split_path[2]
-    object_key = split_path[3]
+    object_key = "/".join(split_path[3:])
 
     # Fetch the object from S3
     s3 = boto3.client('s3')
@@ -35,11 +35,13 @@ def read_json_from_s3(s3_path: str) -> dict:
     return json_content
 
 def lambda_handler(event, context):
+    
+    print(event)
 
     #Construct DynamoDB dict from event
     dynamo_dict= {}
 
-    datetime_timestamp= datetime.fromtimestamp(event['timestamp'])
+    datetime_timestamp= datetime.fromtimestamp(int(event['timestamp']))
     str_datetime_timestamp= datetime_timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
     dynamo_dict['Timestamp']            = str_datetime_timestamp
@@ -50,7 +52,7 @@ def lambda_handler(event, context):
     dynamo_dict['ModelArtifactsS3Path'] = event['model_artifacts_s3_path']
 
     try:
-        metrics_json= read_json_from_s3(event['model_metrics_s3_path'])
+        metrics_json= read_json_from_s3(f"{event['model_metrics_s3_path']}/evaluation.json")
     except Exception as e:
         print(f"Error in the retrieval of evaluation metrics from S3: {e}")
         print("Metric values will be left indetermined")
@@ -59,14 +61,14 @@ def lambda_handler(event, context):
     dynamo_dict['RMSE']          = metrics_json['metrics'].get('rmse', 'Indetermined')
     dynamo_dict['MAPE']          = metrics_json['metrics'].get('mape', 'Indetermined')
     dynamo_dict['MAE']           = metrics_json['metrics'].get('mae', 'Indetermined')
-    dynamo_dict['ModelAccepted'] = event['model_accepted']
+    dynamo_dict['ModelAccepted'] = bool(event['model_accepted'])
 
-    if type(dynamo_dict['rmse']) == float:
-        dynamo_dict['rmse']= Decimal(dynamo_dict['rmse'])
-    if type(dynamo_dict['mape']) == float:
-        dynamo_dict['mape']= Decimal(dynamo_dict['mape'])
-    if type(dynamo_dict['rmse']) == float:
-        dynamo_dict['mae']= Decimal(dynamo_dict['mae'])
+    if type(dynamo_dict['RMSE']) == float:
+        dynamo_dict['RMSE']= Decimal(str(dynamo_dict['RMSE']))
+    if type(dynamo_dict['MAPE']) == float:
+        dynamo_dict['MAPE']= Decimal(str(dynamo_dict['MAPE']))
+    if type(dynamo_dict['MAE']) == float:
+        dynamo_dict['MAE']= Decimal(str(dynamo_dict['MAE']))
 
     #Saving Dict to DynamoDB
     dynamodb = boto3.resource('dynamodb')
@@ -76,10 +78,10 @@ def lambda_handler(event, context):
 
         response = table.put_item(Item=dynamo_dict)
     except Exception as e:
-        print(f"Error the update on the logging DyanmoDB table {os.environ['PIPELINE_EXECUTION_LOGGING_TABLE']}: {e}")
+        print(f"Error on the update on the logging DynamoDB table {os.environ['PIPELINE_EXECUTION_LOGGING_TABLE']}: {e}")
 
     # Check if model was accepted, if yes update the serveless endpoint so it points to it
-    if dynamo_dict['model_accepted']:
+    if dynamo_dict['ModelAccepted']:
         sagemaker = boto3.client('sagemaker')
 
         #Checks if endpoint to be updated exists.
@@ -90,6 +92,7 @@ def lambda_handler(event, context):
             # Attempt to describe the endpoint
             endpoint_description = sagemaker.describe_endpoint(EndpointName=endpoint_name)
             existence_flag=True
+            print("Endpoint already exists")
 
         except ClientError as e:
             # If the endpoint doesn't exist, handle the exception
@@ -100,9 +103,10 @@ def lambda_handler(event, context):
                 # Handle other exceptions if necessary
                 print("An error occurred:", e)
 
-        #Creates endpoint config using new model
+        # Creates endpoint config using new model
+        config_name= f'serverless-endpoint-default-config-{os.environ["STAGE"]}-{event["timestamp"]}'
         response = sagemaker.create_endpoint_config(
-            EndpointConfigName=f'serverless-endpoint-default-config-{os.environ["STAGE"]}-{event["timestamp"]}',
+            EndpointConfigName=config_name,
             ProductionVariants=[
                 {
                     "ModelName": event['model_name'],
@@ -120,14 +124,14 @@ def lambda_handler(event, context):
         if existence_flag:
             response = sagemaker.update_endpoint(
                 EndpointName=os.environ["SERVERLESS_ENDPOINT_NAME"],
-                EndpointConfigName=f"default-serverless-endpoint-default-config-{event['timestamp']}"
+                EndpointConfigName=config_name
             )
 
         else:
 
             response = sagemaker.create_endpoint(
                 EndpointName=os.environ["SERVERLESS_ENDPOINT_NAME"],
-                EndpointConfigName=f"default-serverless-endpoint-default-config-{event['timestamp']}"
+                EndpointConfigName=config_name
             )
 
          
