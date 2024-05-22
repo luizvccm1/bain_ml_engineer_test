@@ -29,10 +29,10 @@ ENV PATH="/opt/program:${PATH}"
 # Copy serve files to enviroment
 COPY serve-files /opt/program
 
-# # Ensure var/log/nginx directory exists and their symbolic links can be created
-# RUN mkdir -p /var/log/nginx
-# RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
-#     ln -sf /dev/stderr /var/log/nginx/error.log
+# Ensure var/log/nginx directory exists and their symbolic links can be created
+RUN mkdir -p /var/log/nginx
+RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
+    ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Set the working directory
 WORKDIR /opt/program
