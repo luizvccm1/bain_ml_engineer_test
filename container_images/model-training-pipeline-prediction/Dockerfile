@@ -4,6 +4,7 @@ FROM python:3.8-slim
 # Install necessary system packages and Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    nginx \
     ca-certificates \
     curl \
     wget \
@@ -26,16 +27,17 @@ ENV PYTHONDONTWRITEBYTECODE=TRUE
 ENV PATH="/opt/program:${PATH}"
 
 # Copy serve files to enviroment
-COPY serve-files /opt/ml
+COPY serve-files /opt/program
 
-# Ensure var/log/nginx directory exists and their symbolic links can be created
-RUN mkdir -p /var/log/nginx
-RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
-    ln -sf /dev/stderr /var/log/nginx/error.log
+# # Ensure var/log/nginx directory exists and their symbolic links can be created
+# RUN mkdir -p /var/log/nginx
+# RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
+#     ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Set the working directory
-WORKDIR /opt/ml
+WORKDIR /opt/program
 
 # Define the entry point
 ENTRYPOINT ["python3", "serve"]
+
 
