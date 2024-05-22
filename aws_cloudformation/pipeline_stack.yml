@@ -239,6 +239,7 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
         - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
       Tags:
         - Key: "Environment"
           Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
