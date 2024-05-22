@@ -21,10 +21,10 @@ Parameters:
 Mappings:
   ResourceNames:
     AppPrefix:
-      CamelCase: "blackbeltPredictiveMaintenance"
-      SnakeCase: "blackbelt_predictive_maintenance"
-      PascalCase: "BlackbeltPredictiveMaintenance"
-      KebabCase: "blackbelt-predictive-maintenance"
+      CamelCase: "bainMLEngineeringTest"
+      SnakeCase: "bain_ml_engineering_test"
+      PascalCase: "BainMLEngineeringTest"
+      KebabCase: "bain-ml-engineering-test"
 
   StageName:
     dev:

@@ -1,6 +1,31 @@
 
 Description: AWS CloudFormation template to create the networking configurations necessary for the API to work
 
+Parameters:
+  Stage:
+    Type: "String"
+    Description: "Application Environment"
+    AllowedValues: ["dev", "stg", "prd"]
+
+Mappings:
+  ResourceNames:
+    AppPrefix:
+      CamelCase: "bainMLEngineeringTest"
+      SnakeCase: "bain_ml_engineering_test"
+      PascalCase: "BainMLEngineeringTest"
+      KebabCase: "bain-ml-engineering-test"
+
+  StageName:
+    dev:
+      CamelCase: "Dev"
+      UpperCase: "DEV"
+    stg:
+      CamelCase: "Stg"
+      UpperCase: "STG"
+    prd:
+      CamelCase: "Prd"
+      UpperCase: "PRD"
+
 Resources:
   MainVPC:
     Type: AWS::EC2::VPC

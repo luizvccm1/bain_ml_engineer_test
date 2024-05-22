@@ -1,0 +1,120 @@
+Description: Stack responsible for cerating the resources related to the use of the Model Endpoint Created
+
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  VpcId:
+    Type: String
+    Description: ID of the existing VPC where resources will be created
+  SubnetId:
+    Type: String
+    Description: ID of the existing subnet where resources will be created
+  VPCSecurityGroup: 
+    Type: String
+    Description: Security group to be passed to the resources created
+
+Resources:
+
+  ApiTestingLambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: "../../lambda_code"
+      FunctionName: !Sub "test_api_lambda-${Stage}"
+      Handler: test_api_lambda.handler
+      MemorySize: 512
+      Runtime: python3.8
+      Timeout: 60
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref SubnetId
+
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda function
+      VpcId: !Ref VpcId
+
+  LambdaSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref LambdaSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref LambdaSecurityGroup
+
+  ECRFargateTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: ecr-fargate-task
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECRFargateExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECRFargateTaskRole.Arn
+      ContainerDefinitions:
+        - Name: ecr-fargate-container
+          Image: !Ref ContainerImage
+          PortMappings:
+            - ContainerPort: 80
+
+  ECRFargateService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ClusterName
+      DesiredCount: 1
+      TaskDefinition: !Ref ECRFargateTaskDefinition
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref SubnetId
+          SecurityGroups:
+            - !Ref ECRFargateSecurityGroup
+
+  ECRFargateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ECR Fargate deployment
+      VpcId: !Ref VpcId
+
+  ECRFargateSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref ECRFargateSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref ECRFargateSecurityGroup
+
+  DynamoDBTable1:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Table1
+      AttributeDefinitions:
+        - AttributeName: ID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  DynamoDBTable2:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Table2
+      AttributeDefinitions:
+        - AttributeName: ID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  ApiTestingLambdaArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt ApiTestingLambda.Arn
+  ECRFargateServiceName:
+    Description: Name of the ECS Fargate service
+    Value: !GetAtt ECRFargateService.Name
