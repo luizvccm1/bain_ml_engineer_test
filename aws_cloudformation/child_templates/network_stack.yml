@@ -74,7 +74,7 @@ Resources:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       VpcId: !Ref MainVPC
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.sagemaker.api
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.sagemaker.runtime
       VpcEndpointType: Interface
       SubnetIds:
         - !Ref PrivateSubnet
@@ -87,10 +87,11 @@ Resources:
       VpcId: !Ref MainVPC
       GroupDescription: Security group for SageMaker VPC Endpoint
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 10.0.0.0/16
+        - IpProtocol: '-1'  # Allow all protocols
+          CidrIp: '0.0.0.0/0'  # Allow traffic from all sources
+      SecurityGroupEgress:
+        - IpProtocol: '-1'  # Allow all protocols
+          CidrIp: '0.0.0.0/0'  # Allow traffic to all destinations
       Tags:
         - Key: Name
           Value: SageMakerEndpointSG

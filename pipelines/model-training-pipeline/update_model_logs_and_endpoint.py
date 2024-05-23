@@ -113,8 +113,7 @@ def lambda_handler(event, context):
                     "VariantName": "AllTraffic",
                     "ServerlessConfig": {
                         "MemorySizeInMB": 1024,
-                        "MaxConcurrency": 10,
-                        "ProvisionedConcurrency": 1,
+                        "MaxConcurrency": 10
                     }
                 } 
             ]
@@ -123,14 +122,14 @@ def lambda_handler(event, context):
         #Updates model or creates new one
         if existence_flag:
             response = sagemaker.update_endpoint(
-                EndpointName=os.environ["SERVERLESS_ENDPOINT_NAME"],
+                EndpointName=endpoint_name,
                 EndpointConfigName=config_name
             )
 
         else:
 
             response = sagemaker.create_endpoint(
-                EndpointName=os.environ["SERVERLESS_ENDPOINT_NAME"],
+                EndpointName=endpoint_name,
                 EndpointConfigName=config_name
             )
 

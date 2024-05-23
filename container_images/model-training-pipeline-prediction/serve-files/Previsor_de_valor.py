@@ -16,11 +16,12 @@ import json
 
 import flask
 import requests
+import os
 
 input_path="/opt/ml/model"
 output_path="/opt/ml/processing/output"
 
-model_sklearn= joblib.load()
+model_sklearn= joblib.load(f"{input_path}/property_value_estimator_pipeline.sav")
 
 app = flask.Flask(__name__)
 @app.route('/ping', methods=['GET'])
@@ -38,22 +39,21 @@ def ping():
 @app.route('/invocations', methods=['POST'])
 def transformation():
     try:
-        print('Carregando CSV')
-        # Get input CSV data and convert it to a DF
+        print('Carregando json')
+        # Get input JSON data and convert it to a DF
         f = flask.request.get_data()
         #store the file contents as a JSON
-        input_list= json.loads(f)
+        input_json= json.loads(f)
 
         #generate input df
-        input_df= pd.DataFrame()
-        input_df.loc[input_list]
+        input_df= pd.DataFrame([input_json])
 
         #generate_prediction
         prediction= model_sklearn.predict(input_df)
 
         # Transform predictions to JSON
         result = {
-            'value':  prediction,
+            'value':  prediction[0],
             }
         
         resultjson = json.dumps(result)
