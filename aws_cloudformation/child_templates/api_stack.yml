@@ -25,21 +25,21 @@ Parameters:
 
 Resources:
 
-  # ApiTestingLambda:
-  #   Type: 'AWS::Serverless::Function'
-  #   Properties:
-  #     CodeUri: "../../lambda_code"
-  #     FunctionName: !Sub "test-api-lambda-${Stage}"
-  #     Handler: test_api_lambda.handler
-  #     MemorySize: 512
-  #     Runtime: python3.8
-  #     Timeout: 60
-  #     Role:
-  #     VpcConfig:
-  #       SecurityGroupIds:
-  #         - !Ref VPCSecurityGroup
-  #       SubnetIds:
-  #         - !Ref SubnetId
+  ApiTestingLambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: "../../lambda_code"
+      FunctionName: !Sub "test-api-lambda-${Stage}"
+      Handler: test_api_lambda.handler
+      MemorySize: 512
+      Runtime: python3.8
+      Timeout: 60
+      Role: arn:aws:iam::527069186139:role/bain-ml-engineering-test-prd-PipelineLambdaRole-Pyy47u1lcQNP
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref VPCSecurityGroup
+        SubnetIds:
+          - !Ref SubnetId
 
   # ApiTestingLambda:
   #   Type: 'AWS::Lambda::Function'
