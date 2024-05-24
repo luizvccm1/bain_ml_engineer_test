@@ -376,6 +376,7 @@ Resources:
         - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
         - "arn:aws:iam::aws:policy/AwsCloudFormationFullAccess"
         - "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
+        - "arn:aws:iam::aws:policy/AmazonVPCFullAccess"
       Policies:
         - PolicyName: !Sub
             - "${AppName}CloudFormationPolicy"
@@ -549,7 +550,7 @@ Resources:
       Value:
         !Sub |
         {
-          "PipelineLambdaRole": "${PipelineLambdaRole.Arn}",
+          "PipelineLambdaRoleArn": "${PipelineLambdaRole.Arn}",
           "EcsTaskExecutionRoleArn": "${EcsTaskExecutionRole.Arn}"
         }
       Tags:
