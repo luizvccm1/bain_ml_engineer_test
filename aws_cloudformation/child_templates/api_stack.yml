@@ -1,6 +1,6 @@
-Description: Stack responsible for cerating the resources related to the use of the Model Endpoint created
+Description: Stack responsible for creating the resources related to the use of the Model Endpoint created
 
-# Transform: AWS::Serverless-2016-10-31
+Transform: AWS::Serverless-2016-10-31
 
 Parameters:
   VpcId:
@@ -9,6 +9,9 @@ Parameters:
   SubnetId:
     Type: String
     Description: ID of the existing subnet where resources will be created
+  SubnetId2:
+    Type: String
+    Description: ID of the second existing subnet where resources will be created
   VPCSecurityGroup: 
     Type: String
     Description: Security group to be passed to the resources created
@@ -16,6 +19,9 @@ Parameters:
     Type: "String"
     Description: "Application Environment"
     AllowedValues: ["dev", "stg", "prd"]
+  EcsTaskExecutionRoleArn:
+    Type: String
+    Description: Arn of the role to be used by ECS
 
 Resources:
 
@@ -23,7 +29,7 @@ Resources:
   #   Type: 'AWS::Serverless::Function'
   #   Properties:
   #     CodeUri: "../../lambda_code"
-  #     FunctionName: !Sub "test_api_lambda-${Stage}"
+  #     FunctionName: !Sub "test-api-lambda-${Stage}"
   #     Handler: test_api_lambda.handler
   #     MemorySize: 512
   #     Runtime: python3.8
@@ -35,25 +41,25 @@ Resources:
   #       SubnetIds:
   #         - !Ref SubnetId
 
-  ApiTestingLambda:
-    Type: 'AWS::Lambda::Function'
-    Properties:
-      Code:
-        ZipFile: |
-          def lambda_handler(event, context):
-              # Your Lambda function code here
-              pass
-      FunctionName: !Sub "test_api_lambda-${Stage}"
-      Handler: test_api_lambda.handler
-      MemorySize: 512
-      Role: arn:aws:iam::527069186139:role/bain-ml-engineering-test-prd-PipelineLambdaRole-Pyy47u1lcQNP
-      Runtime: python3.8
-      Timeout: 60
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref VPCSecurityGroup
-        SubnetIds:
-          - !Ref SubnetId
+  # ApiTestingLambda:
+  #   Type: 'AWS::Lambda::Function'
+  #   Properties:
+  #     Code:
+  #       ZipFile: |
+  #         def lambda_handler(event, context):
+  #             # Your Lambda function code here
+  #             pass
+  #     FunctionName: !Sub "test_api_lambda-${Stage}"
+  #     Handler: test_api_lambda.handler
+  #     MemorySize: 512
+  #     Role: arn:aws:iam::527069186139:role/bain-ml-engineering-test-prd-PipelineLambdaRole-Pyy47u1lcQNP
+  #     Runtime: python3.8
+  #     Timeout: 60
+  #     VpcConfig:
+  #       SecurityGroupIds:
+  #         - !Ref VPCSecurityGroup
+  #       SubnetIds:
+  #         - !Ref SubnetId
 
   VPCSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -68,12 +74,117 @@ Resources:
       TableName: !Sub "inference-results-logging-table-${Stage}"
       AttributeDefinitions:
         -
-          AttributeName: "Timestamp"
+          AttributeName: "timestamp"
           AttributeType: "S"
       KeySchema:
-        - AttributeName: "Timestamp"
+        - AttributeName: "timestamp"
           KeyType: "HASH"
       BillingMode: "PAY_PER_REQUEST"
+
+  ECSFargateCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "property-value-predictor-api-${Stage}"
+
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "ecs/property-value-predictor-api-${Stage}"
+
+  ApiTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "property-value-predictor-api-${Stage}"
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn: !Ref EcsTaskExecutionRoleArn
+      ExecutionRoleArn: !Ref EcsTaskExecutionRoleArn
+      ContainerDefinitions:
+        - Name: !Sub property-value-predictor-${Stage}
+          Image: !Sub 527069186139.dkr.ecr.us-east-1.amazonaws.com/sagemaker-model-deployment-api-${Stage}:latest
+          Memory: 512
+          Cpu: 256
+          PortMappings:
+            - ContainerPort: 4200
+              HostPort: 4200
+          LogConfiguration: 
+            LogDriver: awslogs
+            Options: 
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: STAGE
+              Value: !Sub "${Stage}"
+            - Name: REGION
+              Value: !Ref AWS::Region
+
+  ECSFargateService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSFargateCluster
+      ServiceName: !Sub "property-value-predictor-api-${Stage}"
+      TaskDefinition: !Ref ApiTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 0
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref SubnetId
+            - !Ref SubnetId2
+          SecurityGroups:
+            - !Ref VPCSecurityGroup
+          AssignPublicIp: DISABLED
+      LoadBalancers:
+        - ContainerName: !Sub property-value-predictor-${Stage}
+          ContainerPort: 4200
+          TargetGroupArn: !Ref ECSTargetGroup
+
+  ECSLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub value-predictor-ecs-lb-${Stage}
+      Scheme: internal 
+      Subnets:
+        - !Ref SubnetId
+        - !Ref SubnetId2
+      SecurityGroups:
+        - !Ref VPCSecurityGroup
+
+  ECSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ECSTargetGroup
+      LoadBalancerArn: !Ref ECSLoadBalancer
+      Port: 80 
+      Protocol: HTTP 
+
+  ECSTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub value-predictor-ecs-lb-tg-${Stage}
+      Port: 4200
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VpcId
+      HealthCheckPath: /ping
+
+  ApiKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub property-value-predictor-api-keys-${Stage}
+      Description: A secret generated using CloudFormation
+      GenerateSecretString:
+        ExcludeCharacters: '"@/\\'
+        ExcludePunctuation: true
+        GenerateStringKey: "ApiKey1"
+        PasswordLength: 12
+        SecretStringTemplate: '{}'
 
 Outputs:
   ApiTestingLambdaArn:

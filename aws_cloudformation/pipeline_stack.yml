@@ -50,6 +50,35 @@ Resources:
         EventBridgeConfiguration:
           EventBridgeEnabled: true
 
+  EcsTaskExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: 
+                - "ecs.amazonaws.com"
+                - "ecs-tasks.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      Description: Role used to run ecs
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+        - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+        - "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
+      Tags:
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
   CodeBuildRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -345,8 +374,8 @@ Resources:
         - "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
         - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
         - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
-        - "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
         - "arn:aws:iam::aws:policy/AwsCloudFormationFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
       Policies:
         - PolicyName: !Sub
             - "${AppName}CloudFormationPolicy"
@@ -520,7 +549,8 @@ Resources:
       Value:
         !Sub |
         {
-          "PipelineLambdaRole": "${PipelineLambdaRole.Arn}"
+          "PipelineLambdaRole": "${PipelineLambdaRole.Arn}",
+          "EcsTaskExecutionRoleArn": "${EcsTaskExecutionRole.Arn}"
         }
       Tags:
         "Environment": !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]

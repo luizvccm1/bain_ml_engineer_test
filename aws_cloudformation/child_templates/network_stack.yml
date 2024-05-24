@@ -1,5 +1,5 @@
 
-Description: AWS CloudFormation template to create the networking configurations necessary for the API to work
+Description: AWS CloudFormation template used to create the networking configurations necessary for the API to work
 
 Parameters:
   Stage:
@@ -35,7 +35,9 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: MainVPC
+          Value: !Sub 
+            - "MainVPC${AppStage}"
+            - AppStage: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
 
   PrivateSubnet:
     Type: AWS::EC2::Subnet
@@ -45,7 +47,21 @@ Resources:
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
       Tags:
         - Key: Name
-          Value: PrivateSubnet
+          Value: !Sub 
+            - "PrivateSubnet${AppStage}"
+            - AppStage: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MainVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: !Sub 
+            - "PrivateSubnet${AppStage}2"
+            - AppStage: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
 
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
@@ -53,7 +69,9 @@ Resources:
       VpcId: !Ref MainVPC
       Tags:
         - Key: Name
-          Value: PrivateRouteTable
+          Value: !Sub 
+            - "PrivateRouteTable${AppStage}"
+            - AppStage: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
 
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -70,11 +88,81 @@ Resources:
       RouteTableIds:
         - !Ref PrivateRouteTable
 
-  SageMakerVPCEndpoint:
+  S3VPCEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       VpcId: !Ref MainVPC
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+
+  SageMakerVPCEndpointApi:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref MainVPC
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.sagemaker.api
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SageMakerEndpointSecurityGroup
+
+  SageMakerVPCEndpointRuntime:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref MainVPC
+      PrivateDnsEnabled: true
       ServiceName: !Sub com.amazonaws.${AWS::Region}.sagemaker.runtime
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SageMakerEndpointSecurityGroup
+
+  SecretsVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref MainVPC
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SageMakerEndpointSecurityGroup
+
+  EcrVPCEndpointDocker:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref MainVPC
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SageMakerEndpointSecurityGroup
+
+  EcrVPCEndpointApi:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref MainVPC
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SageMakerEndpointSecurityGroup
+
+  LogsVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref MainVPC
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
       VpcEndpointType: Interface
       SubnetIds:
         - !Ref PrivateSubnet
@@ -87,14 +175,16 @@ Resources:
       VpcId: !Ref MainVPC
       GroupDescription: Security group for SageMaker VPC Endpoint
       SecurityGroupIngress:
-        - IpProtocol: '-1'  # Allow all protocols
-          CidrIp: '0.0.0.0/0'  # Allow traffic from all sources
+        - IpProtocol: '-1'  
+          CidrIp: '0.0.0.0/0' 
       SecurityGroupEgress:
-        - IpProtocol: '-1'  # Allow all protocols
-          CidrIp: '0.0.0.0/0'  # Allow traffic to all destinations
+        - IpProtocol: '-1'  
+          CidrIp: '0.0.0.0/0'
       Tags:
         - Key: Name
-          Value: SageMakerEndpointSG
+          Value: !Sub 
+            - "SageMakerEndpointSG${AppStage}"
+            - AppStage: !FindInMap [ "StageName", !Ref Stage, "CamelCase" ]
 
 Outputs:
   VPCId:
@@ -103,12 +193,9 @@ Outputs:
   PrivateSubnetId:
     Description: The ID of the private subnet
     Value: !Ref PrivateSubnet
-  DynamoVPCEndpointId:
-    Description: The ID of the DynamoDB VPC endpoint
-    Value: !Ref DynamoVPCEndpoint
-  SageMakerVPCEndpointId:
-    Description: The ID of the SageMaker VPC endpoint
-    Value: !Ref SageMakerVPCEndpoint
+  PrivateSubnetId2:
+    Description: The ID of the second private subnet
+    Value: !Ref PrivateSubnet2
   SageMakerEndpointSecurityGroupId:
     Description: The ID of the SageMaker endpoint security group
     Value: !Ref SageMakerEndpointSecurityGroup

@@ -8,7 +8,7 @@ Parameters:
     Description: "Application Environment"
     AllowedValues: ["dev", "stg", "prd"]
 
-  PipelineLambdaRole:
+  PipelineLambdaRoleArn:
     Type: "String"
     Description: "Role to be passed to the lambda function responsible for updating the logs after the training pipeline runs"
     
@@ -60,5 +60,5 @@ Resources:
       Handler: !Sub "update_model_logs_and_endpoint.lambda_handler"
       Runtime: "python3.8"
       MemorySize: 512
-      Role: !Ref "PipelineLambdaRole"
+      Role: !Ref "PipelineLambdaRoleArn"
       Timeout: 900

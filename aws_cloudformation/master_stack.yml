@@ -8,9 +8,12 @@ Parameters:
   S3Bucket:
     Type: "String"
     Description: "S3 Bucket where the deployment artifacts are stored"
-  PipelineLambdaRole:
+  PipelineLambdaRoleArn:
     Type: "String"
     Description: "Role to be passed to the lambda function responsible for updating the logs after the training pipeline runs"
+  EcsTaskExecutionRoleArn:
+    Type: "String"
+    Description: "Role to be passed to the ecs cluster responsible for running the API"
   CloudFormationTemplatesS3Prefix:
     Type: "String"
     Description: "S3 Prefix of the path containing the substack files"
@@ -39,19 +42,52 @@ Mappings:
 
 Resources:
 
-    ModelCreationStack:
-      Type: "AWS::CloudFormation::Stack"
-      Properties:
-        TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/model_creation_stack.yml"
-        Parameters:
-          Stage: !Ref "Stage"
-          PipelineLambdaRole: !Ref "PipelineLambdaRole"
-        Tags: 
-          - Key: "Environment"
-            Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
-          - Key: "Monitoring"
-            Value: "enabled"
-          - Key: "Project"
-            Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+  ModelCreationStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/model_creation_stack.yml"
+      Parameters:
+        Stage: !Ref "Stage"
+        PipelineLambdaRoleArn: !Ref "PipelineLambdaRoleArn"
+      Tags: 
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
+  NetworkStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/network_stack.yml"
+      Parameters:
+        Stage: !Ref "Stage"
+      Tags: 
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
+
+  APIStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Sub "https://${S3Bucket}.s3.amazonaws.com/${CloudFormationTemplatesS3Prefix}/api_stack.yml"
+      Parameters:
+        Stage: !Ref "Stage"
+        VpcId: !GetAtt NetworkStack.Outputs.VPCId
+        SubnetId: !GetAtt NetworkStack.Outputs.PrivateSubnetId
+        SubnetId2: !GetAtt NetworkStack.Outputs.PrivateSubnetId2
+        VPCSecurityGroup:  !GetAtt NetworkStack.Outputs.SageMakerEndpointSecurityGroupId
+        EcsTaskExecutionRoleArn: !Ref EcsTaskExecutionRoleArn
+      Tags: 
+        - Key: "Environment"
+          Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
+        - Key: "Monitoring"
+          Value: "enabled"
+        - Key: "Project"
+          Value: !FindInMap [ "ResourceNames", "AppPrefix", "PascalCase" ]
 
 

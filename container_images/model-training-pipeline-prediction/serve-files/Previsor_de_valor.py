@@ -27,7 +27,6 @@ app = flask.Flask(__name__)
 @app.route('/ping', methods=['GET'])
 def ping():
     # Check if the classifier was loaded correctly
-    print("GET acionado")
     try:
         #regressor
         status = 200
