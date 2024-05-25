@@ -20,6 +20,9 @@ Parameters:
   ModelPipeline:
     Type: "String"
     Description: "Name of the model training pipeline created"
+  LambdaLayerKeyRequests:
+    Type: String
+    Description: S3 Bucket key where the requests lambda layer deployment package is stored
     
 Mappings:
   ResourceNames:
@@ -82,6 +85,8 @@ Resources:
         SubnetId2: !GetAtt NetworkStack.Outputs.PrivateSubnetId2
         VPCSecurityGroup:  !GetAtt NetworkStack.Outputs.SageMakerEndpointSecurityGroupId
         EcsTaskExecutionRoleArn: !Ref EcsTaskExecutionRoleArn
+        LambdaLayerKeyRequests: !Ref LambdaLayerKeyRequests
+        ProjectBucket: !Ref S3Bucket
       Tags: 
         - Key: "Environment"
           Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]

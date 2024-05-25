@@ -1,10 +1,11 @@
 import requests
 import json
+import os
 
 def lambda_handler(event, context):
 
     # Define the API endpoint URL
-    alb_url = 'http://internal-value-predictor-ecs-lb-prd-1888485362.us-east-1.elb.amazonaws.com:80/{path}'.format(path=event['endpoint'])
+    alb_url = f"http://{os.environ['DNS_NAME']}:80/{event['endpoint']}"
     
     #Define the request params
     headers = event['headers']

@@ -16,12 +16,37 @@ Parameters:
     Type: String
     Description: Security group to be passed to the resources created
   Stage:
-    Type: "String"
-    Description: "Application Environment"
+    Type: String
+    Description: Application Environment
     AllowedValues: ["dev", "stg", "prd"]
   EcsTaskExecutionRoleArn:
     Type: String
     Description: Arn of the role to be used by ECS
+  LambdaLayerKeyRequests:
+    Type: String
+    Description: S3 Bucket key where the requests lambda layer deployment package is stored
+  ProjectBucket:
+    Type: String
+    Description: Name of the bucket where the build artifacts are stored
+
+Mappings:
+  ResourceNames:
+    AppPrefix:
+      CamelCase: "bainMLEngineeringTest"
+      SnakeCase: "bain_ml_engineering_test"
+      PascalCase: "BainMLEngineeringTest"
+      KebabCase: "bain-ml-engineering-test"
+
+  StageName:
+    dev:
+      CamelCase: "Dev"
+      UpperCase: "DEV"
+    stg:
+      CamelCase: "Stg"
+      UpperCase: "STG"
+    prd:
+      CamelCase: "Prd"
+      UpperCase: "PRD"
 
 Resources:
 
@@ -29,7 +54,12 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: "../../lambda_code"
+      Environment:
+        Variables:
+          DNS_NAME: !GetAtt ECSLoadBalancer.DNSName
       FunctionName: !Sub "test-api-lambda-${Stage}"
+      Layers: 
+        - !Ref RequestsLayer
       Handler: test_api_lambda.handler
       MemorySize: 512
       Runtime: python3.8
@@ -41,25 +71,14 @@ Resources:
         SubnetIds:
           - !Ref SubnetId
 
-  # ApiTestingLambda:
-  #   Type: 'AWS::Lambda::Function'
-  #   Properties:
-  #     Code:
-  #       ZipFile: |
-  #         def lambda_handler(event, context):
-  #             # Your Lambda function code here
-  #             pass
-  #     FunctionName: !Sub "test_api_lambda-${Stage}"
-  #     Handler: test_api_lambda.handler
-  #     MemorySize: 512
-  #     Role: arn:aws:iam::527069186139:role/bain-ml-engineering-test-prd-PipelineLambdaRole-Pyy47u1lcQNP
-  #     Runtime: python3.8
-  #     Timeout: 60
-  #     VpcConfig:
-  #       SecurityGroupIds:
-  #         - !Ref VPCSecurityGroup
-  #       SubnetIds:
-  #         - !Ref SubnetId
+  RequestsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: 
+        Bucket: !Ref ProjectBucket
+        Key: !Ref LambdaLayerKeyRequests
+      Description: Layer contendo distribuição do Requests
+      LayerName: !Sub "price-predictor-requests-layer-${Stage}"
 
   VPCSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
