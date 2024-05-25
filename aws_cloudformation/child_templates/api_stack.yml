@@ -124,6 +124,7 @@ Resources:
 
   ECSFargateService:
     Type: AWS::ECS::Service
+    DependsOn: ECSListener
     Properties:
       Cluster: !Ref ECSFargateCluster
       ServiceName: !Sub "property-value-predictor-api-${Stage}"

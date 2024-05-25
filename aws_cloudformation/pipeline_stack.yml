@@ -377,6 +377,9 @@ Resources:
         - "arn:aws:iam::aws:policy/AwsCloudFormationFullAccess"
         - "arn:aws:iam::aws:policy/CloudWatchFullAccessV2"
         - "arn:aws:iam::aws:policy/AmazonVPCFullAccess"
+        - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+        - "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
       Policies:
         - PolicyName: !Sub
             - "${AppName}CloudFormationPolicy"
