@@ -174,7 +174,7 @@ def get_value():
         for key in f:
             if key not in key_list:
                 extra_key_list.append(key)
-        logger.warning(f"Unknown key(s) found: {", ".join(extra_key_list)}. Ignoring them for the prediction generation")
+        logger.warning(f"Unknown key(s) found: {', '.join(extra_key_list)}. Ignoring them for the prediction generation")
 
         if missing_key_list:
             error= {"error": f"Error 422 Unprocessable Entity:Request missing fields : [{', '.join(missing_key_list)}]"}
