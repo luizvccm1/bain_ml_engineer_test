@@ -108,7 +108,7 @@ Resources:
   ECSLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "ecs/property-value-predictor-api-${Stage}"
+      LogGroupName: !Sub "/aws/ecs/property-value-predictor-api-${Stage}"
 
   ApiTaskDefinition:
     Type: AWS::ECS::TaskDefinition

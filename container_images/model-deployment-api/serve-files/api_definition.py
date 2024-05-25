@@ -42,7 +42,7 @@ app = flask.Flask(__name__)
 @app.route('/ping', methods=['GET'])
 def ping():
     # Check if the classifier was loaded correctly
-    logger.info("Starting /ping")
+    logger.info("Executing /ping")
     try:
         #regressor
         status = 200
@@ -65,7 +65,7 @@ def launch_sagemaker_pipeline():
     result: Result of the launching of the pipeline. SUCCESS or FAILURE.
     execution_arn: Only returned if pipeline is launched successfully. The ARN of the pipeline execution started. String.
     """
-    logger.info("Starting /start_training")
+    logger.info("Executing /start_training")
     try:
         # Check API Key
         headers= flask.request.headers
@@ -74,6 +74,7 @@ def launch_sagemaker_pipeline():
         logger.info("Checking API key")
         if not key_manager.validate_key_permission(api_key):
             response= {"Body": "Error: Unauthorized API Key"}
+            logger.error("Unauthorized API Key")
             return flask.Response(response=json.dumps(response), status=403, mimetype='application/json')
 
         # Get input JSON data
@@ -137,7 +138,7 @@ def get_value():
     Json dict containing:
     values: Prediction of the property value. Float.
     """
-    logger.info("Starting /get_prediction")
+    logger.info("Executing /get_prediction")
     try:
         # Check API Key
         headers= flask.request.headers
@@ -145,6 +146,7 @@ def get_value():
 
         if not key_manager.validate_key_permission(api_key):
             response= {"Body": "Error: Unauthorized API Key"}
+            logger.error("Unauthorized API Key")
             return flask.Response(response=json.dumps(response), status=403, mimetype='application/json')
 
         # Get input JSON data
