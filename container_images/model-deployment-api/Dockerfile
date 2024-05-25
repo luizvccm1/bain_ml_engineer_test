@@ -13,7 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE=TRUE
 # Copy serve files, requirements and configuration.json to enviroment
 COPY serve-files /api
 COPY requirements.txt .
-COPY ../../aws_cloudformation/configuration.json /api
+# COPY ../../aws_cloudformation/configuration.json /api
 
 # List files in the /app directory
 RUN echo "Listing files after copying requirements.txt:" && ls -la /api
