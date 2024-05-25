@@ -60,7 +60,7 @@ Resources:
       FunctionName: !Sub "test-api-lambda-${Stage}"
       Layers: 
         - !Ref RequestsLayer
-      Handler: test_api_lambda.handler
+      Handler: test_api_lambda.lambda_handler
       MemorySize: 512
       Runtime: python3.8
       Timeout: 60

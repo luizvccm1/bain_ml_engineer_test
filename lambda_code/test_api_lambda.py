@@ -10,7 +10,8 @@ def lambda_handler(event, context):
     #Define the request params
     headers = event['headers']
     method_type= event['method_type']
-    payload= event['payload']
+    if method_type.lower()== "post":
+        payload= event['payload']
     
 
     try:
