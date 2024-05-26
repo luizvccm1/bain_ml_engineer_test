@@ -61,6 +61,7 @@ Resources:
               Service: 
                 - "ecs.amazonaws.com"
                 - "ecs-tasks.amazonaws.com"
+                - "lambda.amazonaws.com"
             Action:
               - 'sts:AssumeRole'
       Description: Role used to run ecs
