@@ -23,6 +23,7 @@ phases:
       - bash codebuild/build.sh
 
       - export PYTHONUNBUFFERED=TRUE
+      - export AWS_ACCOUNT_ID=$(echo $CODEBUILD_BUILD_ARN | cut -d':' -f5)
       - chmod +x container_images/build_image.sh
 
       - folders=`ls -d container_images/*/`
@@ -39,7 +40,7 @@ phases:
         do
           pipeline_folder=${value:10:(-1)};
           echo "${pipeline_folder}";
-          run-pipeline --module-name pipelines.${pipeline_folder}.pipeline --role-arn $SAGEMAKER_PIPELINE_ROLE_ARN --kwargs "{\"region\":\"${AWS_REGION}\",\"role\":\"${SAGEMAKER_PIPELINE_ROLE_ARN}\",\"default_bucket\":\"${S3Bucket}\", \"image_name\":\"sagemaker-${pipeline_folder}-${Stage}\", \"stage\":\"${Stage}\"}";
+          run-pipeline --module-name pipelines.${pipeline_folder}.pipeline --role-arn $SAGEMAKER_PIPELINE_ROLE_ARN --kwargs "{\"region\":\"${AWS_REGION}\", \"account_id\":\"${AWS_ACCOUNT_ID}\", \"role\":\"${SAGEMAKER_PIPELINE_ROLE_ARN}\",\"default_bucket\":\"${S3Bucket}\", \"image_name\":\"sagemaker-${pipeline_folder}-${Stage}\", \"stage\":\"${Stage}\"}";
         done
       - echo "Create/Update of the SageMaker Pipeline and execution completed."
 
