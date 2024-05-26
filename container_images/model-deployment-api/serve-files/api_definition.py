@@ -160,7 +160,7 @@ def get_value():
             "NetUsableArea",
             "NetArea",
             "NRooms",
-            "NBathrooms",
+            "NBathroom",
             "Latitude",
             "Longitude"
         ]
