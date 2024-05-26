@@ -36,7 +36,7 @@ class ApiKeyManager():
             get_secret_value_response= self.client.get_secret_value(
                 SecretId= self.secret_name
             )
-        except ClientError as e:
+        except Exception as e:
             raise e
         
         secret = get_secret_value_response['SecretString']
