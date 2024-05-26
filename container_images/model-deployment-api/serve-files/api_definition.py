@@ -18,7 +18,7 @@ def snake_case_to_pascal_case(text):
     result = ''.join(capitalized_words)
     return result
 
-region_name = {os.environ['REGION']}
+region_name = f"{os.environ['REGION']}"
 
 table_name = f"inference-results-logging-table-{os.environ['STAGE']}"
 serverless_endpoint_name = f"property-value-regressor-serverless-endpoint-{os.environ['STAGE']}"
