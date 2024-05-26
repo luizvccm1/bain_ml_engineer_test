@@ -34,7 +34,7 @@ sagemaker = boto3.client('sagemaker', region_name=region_name)
 
 key_manager= ApiKeyManager(secret_name, secrets)
 
-logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.info("Setup complete")
 
@@ -130,7 +130,7 @@ def get_value():
     NetUsableArea  : The property's net usable area. Float.
     NetArea        : The property's net area. Float.
     NRooms         : The number of rooms of the property. Float.
-    NBathrooms     : The number of bathrooms of the property. Float.
+    NBathroom      : The number of bathrooms of the property. Float.
     Latitude       : The property's latitude. Float.
     Longitude      : The property's longitude. Float.
 
