@@ -58,7 +58,7 @@ def get_pipeline(
     )
     training_instance_type_sklearn = ParameterString(
         name="TrainingInstanceTypeSKLearn",
-        default_value="ml.t3.large"
+        default_value="ml.m5.large"
     )
     processing_instance_type_model_eval = ParameterString(
         name="ProcessingInstanceTypeModelEval",
