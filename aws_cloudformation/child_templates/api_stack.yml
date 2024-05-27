@@ -140,6 +140,8 @@ Resources:
               Value: !Sub "${Stage}"
             - Name: REGION
               Value: !Ref AWS::Region
+            - Name: ACCOUNT_ID
+              Value: !Ref AWS::AccountId
 
   ECSFargateService:
     Type: AWS::ECS::Service
