@@ -151,7 +151,7 @@ Resources:
       ServiceName: !Sub "property-value-predictor-api-${Stage}"
       TaskDefinition: !Ref ApiTaskDefinition
       LaunchType: FARGATE
-      DesiredCount: 0
+      DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets:
