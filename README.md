@@ -157,10 +157,6 @@ Sim, a tabela `training-pipeline-results-prd` contém todos os resultados do pip
 
 Todos os logs de execução da arquitetura podem ser encontrados dentro do serviço CloudWatch. Segue abaixo as instruções de como acessar cada um deles:
 
-## Logs de API
-
-Os logs de todas as execuções de código realizadas podem ser encontradas no CloudWatch. Segue abaixo como encontrar cada uma delas:
-
 **API do ECS:**
 Entre no seguinte link:
 [CloudWatch Logs - ECS API](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/$252Faws$252Fecs$252Fproperty-value-predictor-api-prd)
