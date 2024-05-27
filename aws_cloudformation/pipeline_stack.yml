@@ -38,7 +38,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub bain-ml-test-cicd-bucket-${Stage} # 58 chars max/ 64 allowed
+      BucketName: !Sub bain-ml-test-cicd-bucket-${AWS::AccountId}-${Stage} # 58 chars max/ 64 allowed
       Tags:
         - Key: "Environment"
           Value: !FindInMap [ "StageName", !Ref "Stage", "UpperCase" ]
@@ -61,6 +61,7 @@ Resources:
               Service: 
                 - "ecs.amazonaws.com"
                 - "ecs-tasks.amazonaws.com"
+                - "lambda.amazonaws.com"
             Action:
               - 'sts:AssumeRole'
       Description: Role used to run ecs

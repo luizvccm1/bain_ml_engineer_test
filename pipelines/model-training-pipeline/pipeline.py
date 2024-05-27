@@ -41,6 +41,7 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def get_pipeline(
    region="us-east-1",
+   account_id="",
    role=None,
    default_bucket=None,
    pipeline_name="property-evaluator-training",  # You can find your pipeline name in the Studio UI (project -> Pipelines -> name)
@@ -62,7 +63,7 @@ def get_pipeline(
     )
     processing_instance_type_model_eval = ParameterString(
         name="ProcessingInstanceTypeModelEval",
-        default_value="ml.m5.large"
+        default_value="ml.t3.large"
     )
     training_data_s3_path = ParameterString(
         name="TrainingDataS3Path",
@@ -106,7 +107,7 @@ def get_pipeline(
     )
 
     script_processor_model_eval = ScriptProcessor(command=['python3'],
-        image_uri=f"527069186139.dkr.ecr.{region}.amazonaws.com/{image_name}:latest",
+        image_uri=f"{account_id}.dkr.ecr.{region}.amazonaws.com/{image_name}:latest",
         role=role,
         instance_count=processing_instance_count,
         instance_type=processing_instance_type_model_eval,
@@ -160,7 +161,7 @@ def get_pipeline(
 
     #Model to be created from the training step
     model_sklearn = Model(
-        image_uri=f"527069186139.dkr.ecr.{region}.amazonaws.com/{image_name[:-4]}-prediction-{stage}:latest",
+        image_uri=f"{account_id}.dkr.ecr.{region}.amazonaws.com/{image_name[:-4]}-prediction-{stage}:latest",
         model_data=step_sklearn.properties.ModelArtifacts.S3ModelArtifacts,
         sagemaker_session=PipelineSession(),
         role=role,

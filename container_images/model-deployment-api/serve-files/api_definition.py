@@ -93,7 +93,7 @@ def launch_sagemaker_pipeline():
         pipeline_hyperparameters=[]
 
         pipeline_hyperparameters.append({"Name": "TrainingTimestamp", "Value": str(time.time())[:-8]})
-        pipeline_hyperparameters.append({"Name": "ValidationLambdaArn", "Value": f"arn:aws:lambda:us-east-1:527069186139:function:update-model-logs-and-endpoints-{os.environ['STAGE']}"})
+        pipeline_hyperparameters.append({"Name": "ValidationLambdaArn", "Value": f"arn:aws:lambda:us-east-1:{os.environ['ACCOUNT_ID']}:function:update-model-logs-and-endpoints-{os.environ['STAGE']}"})
         
         for key in f:
             if key in input_allowed_keys:
